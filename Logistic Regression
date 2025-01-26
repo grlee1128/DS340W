@@ -4,3 +4,14 @@ import kagglehub
 rohitrox_healthcare_provider_fraud_detection_analysis_path = kagglehub.dataset_download('rohitrox/healthcare-provider-fraud-detection-analysis')
 
 print('Data source import complete.')
+
+import numpy as np
+import pandas as pd
+
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+
+train = pd.read_csv('/kaggle/input/healthcare-provider-fraud-detection-analysis/Train-1542865627584.csv');
+train.head()
