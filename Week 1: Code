@@ -1,0 +1,591 @@
+#import libraries that needed
+
+#libraries for data manipulation
+import numpy as np # linear algebra
+import pandas as pd 
+from datetime import datetime
+
+#libraries for visualization
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
+
+#libraries for statistics
+from scipy.stats import chi2_contingency
+
+#libraries for modelling
+#preprocessing
+from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold, RandomizedSearchCV
+from sklearn.pipeline import Pipeline
+from imblearn.pipeline import Pipeline as imbpipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from category_encoders.binary import BinaryEncoder
+from sklearn.preprocessing import RobustScaler, PolynomialFeatures
+from imblearn.over_sampling import SMOTE
+#machine learning
+import tensorflow as tf 
+from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+#evaluation
+from sklearn.metrics import f1_score
+
+#library for preventing warnings
+import warnings
+warnings.filterwarnings('ignore')
+
+
+#Load Data
+
+# Load Train Dataset
+
+Train=pd.read_csv("../input/healthcare-provider-fraud-detection-analysis/Train-1542865627584.csv")
+Train_Beneficiarydata=pd.read_csv("../input/healthcare-provider-fraud-detection-analysis/Train_Beneficiarydata-1542865627584.csv")
+Train_Inpatientdata=pd.read_csv("../input/healthcare-provider-fraud-detection-analysis/Train_Inpatientdata-1542865627584.csv")
+Train_Outpatientdata=pd.read_csv("../input/healthcare-provider-fraud-detection-analysis/Train_Outpatientdata-1542865627584.csv")
+
+# Load Test Dataset
+
+Test=pd.read_csv("../input/healthcare-provider-fraud-detection-analysis/Test-1542969243754.csv")
+Test_Beneficiarydata=pd.read_csv("../input/healthcare-provider-fraud-detection-analysis/Test_Beneficiarydata-1542969243754.csv")
+Test_Inpatientdata=pd.read_csv("../input/healthcare-provider-fraud-detection-analysis/Test_Inpatientdata-1542969243754.csv")
+Test_Outpatientdata=pd.read_csv("../input/healthcare-provider-fraud-detection-analysis/Test_Outpatientdata-1542969243754.csv")
+
+
+## Get information of aligndatasets 
+
+print('Info of Train data :')
+Train.info()
+print('\n------------------------------------------------------------------------------------\n')
+print('Info of Train_Beneficiarydata data :')
+Train_Beneficiarydata.info()
+print('\n------------------------------------------------------------------------------------\n')
+print('Info of Train_Inpatientdata data :')
+Train_Inpatientdata.info()
+print('\n------------------------------------------------------------------------------------\n')
+print('Info of Train_Outpatientdata data :')
+Train_Outpatientdata.info()
+print('\n------------------------------------------------------------------------------------\n')
+print('Info of Test data :')
+Test.info()
+print('\n------------------------------------------------------------------------------------\n')
+print('Info of Test_Beneficiarydata data :')
+Test_Beneficiarydata.info()
+print('\n------------------------------------------------------------------------------------\n')
+print('Info of Test_Inpatientdata data :')
+Test_Inpatientdata.info()
+print('\n------------------------------------------------------------------------------------\n')
+print('Info of Test_Outpatientdata data :')
+Test_Outpatientdata.info()
+
+#merge training data
+Test_Inpatientdata.info()
+print('\n------------------------------------------------------------------------------------\n')
+print('Info of Test_Outpatientdata data :')
+Test_Outpatientdata.info()
+
+df_train.shape
+df_train.info()
+
+
+#Add Num of Claims Features
+# Assign claim to 1 and null claim to 0
+df_train[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']] = df_train[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']].where(~df_train[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']].notna(), 1)
+df_train[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']] = df_train[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']].where(df_train[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']].notna(), 0)
+
+#change type of columns from string into int
+df_train[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']] = df_train[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']].astype('int64')
+
+# Sum number of claims
+claim_diagnose = []
+
+for i in range(len(df_train)):
+    claim_diagnose.append(df_train['ClmDiagnosisCode_1_x'][i]+ df_train['ClmDiagnosisCode_2_x'][i]+ df_train['ClmDiagnosisCode_3_x'][i]+ df_train['ClmDiagnosisCode_4_x'][i]+ df_train['ClmDiagnosisCode_5_x'][i]+ df_train['ClmDiagnosisCode_6_x'][i]+ df_train['ClmDiagnosisCode_7_x'][i]+df_train['ClmDiagnosisCode_8_x'][i]+  df_train['ClmDiagnosisCode_9_x'][i]+ df_train['ClmDiagnosisCode_10_x'][i])
+
+#Put into a column.
+df_train['num_claim_diagnose_in'] = claim_diagnose
+
+#drop columns of claim code.
+df_train.drop(columns = ['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x'], axis = 1, inplace = True)
+
+# Assign claim to 1 and null claim to 0
+df_train[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']] = df_train[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']].where(~df_train[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']].notna(), 1)
+df_train[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']] = df_train[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']].where(df_train[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']].notna(), 0)
+
+#change type of columns from string into int
+df_train[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']] = df_train[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']].astype('int64')
+
+# Sum number of claims
+claim_diagnose = []
+
+for i in range(len(df_train)):
+    claim_diagnose.append(df_train['ClmDiagnosisCode_1_y'][i]+ df_train['ClmDiagnosisCode_2_y'][i]+ df_train['ClmDiagnosisCode_3_y'][i]+ df_train['ClmDiagnosisCode_4_y'][i]+ df_train['ClmDiagnosisCode_5_y'][i]+ df_train['ClmDiagnosisCode_6_y'][i]+ df_train['ClmDiagnosisCode_7_y'][i]+df_train['ClmDiagnosisCode_8_y'][i]+  df_train['ClmDiagnosisCode_9_y'][i]+ df_train['ClmDiagnosisCode_10_y'][i])
+
+#Put into a column.
+df_train['num_claim_diagnose_out'] = claim_diagnose
+
+#drop columns of claim code.
+df_train.drop(columns = ['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y'], axis = 1, inplace = True)
+
+# Assign claim to 1 and null claim to 0
+df_train[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']] = df_train[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']].where(~df_train[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']].notna(), 1)
+df_train[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']] = df_train[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']].where(df_train[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']].notna(), 0)
+
+#change type of columns from string into int
+df_train[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']] = df_train[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']].astype('int64')
+
+# Sum number of claims
+claim_procedure = []
+
+for i in range(len(df_train)):
+    claim_procedure.append(df_train['ClmProcedureCode_1_x'][i]+ df_train['ClmProcedureCode_2_x'][i]+ df_train['ClmProcedureCode_3_x'][i]+ df_train['ClmProcedureCode_4_x'][i]+ df_train['ClmProcedureCode_5_x'][i])
+
+#Put into a column.
+df_train['num_claim_procedure_in'] = claim_procedure
+
+#drop columns of claim code.
+df_train.drop(columns = ['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x'], axis = 1, inplace = True)
+
+# Assign claim to 1 and null claim to 0
+df_train[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']] = df_train[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']].where(~df_train[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']].notna(), 1)
+df_train[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']] = df_train[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']].where(df_train[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']].notna(), 0)
+
+#change type of columns from string into int
+df_train[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']] = df_train[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']].astype('int64')
+
+# Sum number of claims
+claim_procedure = []
+
+for i in range(len(df_train)):
+    claim_procedure.append(df_train['ClmProcedureCode_1_y'][i]+ df_train['ClmProcedureCode_2_y'][i]+ df_train['ClmProcedureCode_3_y'][i]+ df_train['ClmProcedureCode_4_y'][i]+ df_train['ClmProcedureCode_5_y'][i])
+
+#Put into a column.
+df_train['num_claim_procedure_out'] = claim_procedure
+
+#drop columns of claim code.
+df_train.drop(columns = ['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y'], axis = 1, inplace = True)
+
+
+#Map Attending columns
+
+df_train[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']] = df_train[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']].where(~df_train[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']].notna(), 1)
+df_train[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']] = df_train[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']].where(df_train[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']].notna(), 0)
+df_train[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']] = df_train[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']].where(~df_train[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']].notna(), 1)
+df_train[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']] = df_train[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']].where(df_train[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']].notna(), 0)
+
+df_train[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']] = df_train[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']].astype('int64')
+df_train[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']] = df_train[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']].astype('int64')
+
+#Mapping Chronic Disease columns
+##Replacing 2 with 0 for chronic conditions ,that means chroniv condition No is 0 and yes is 1
+
+df_train = df_train.replace({'ChronicCond_Alzheimer': 2, 'ChronicCond_Heartfailure': 2, 'ChronicCond_KidneyDisease': 2,
+                           'ChronicCond_Cancer': 2, 'ChronicCond_ObstrPulmonary': 2, 'ChronicCond_Depression': 2, 
+                           'ChronicCond_Diabetes': 2, 'ChronicCond_IschemicHeart': 2, 'ChronicCond_Osteoporasis': 2, 
+                           'ChronicCond_rheumatoidarthritis': 2, 'ChronicCond_stroke': 2 }, 0)
+
+
+#Groupby Provider and Potential Fraud
+df_train = df_train.groupby(['Provider', 'PotentialFraud'],as_index=False).agg('sum')
+df_train.drop(columns = ['Gender', 'Race', 'State', 'County'], inplace = True, axis = 1)
+
+
+#Rename Rest of Inpatient Data Columns
+#Assign template to rename columns.
+name = []
+temp = []
+for column in df_train.columns:
+    if column[-2:] == '_x':
+        name.append(column)
+        temp.append(column[:-2] + '_In')
+
+# Rename column based on template.
+for i in range(len(name)):
+    df_train=df_train.rename(columns = {name[i]:temp[i]})
+
+#Assign template to rename columns.
+name = []
+temp = []
+for column in df_train.columns:
+    if column[-2:] == '_y':
+        name.append(column)
+        temp.append(column[:-2] + '_Out')
+
+# Rename column based on template.
+for i in range(len(name)):
+    df_train=df_train.rename(columns = {name[i]:temp[i]})
+
+pd.set_option('display.max_columns', None)
+
+print('Describe Stats of New Train data :')
+
+df_train.describe(include = 'all') 
+
+
+
+#Delete Columns that only one value
+#Based on descriptive statistics, columns that only one value will be deleted.
+deleted = []
+for feature in df_train.columns:
+    if df_train[feature].nunique() <= 1:
+        deleted.append(feature)
+        
+df_train = df_train[[i for i in df_train.columns if i not in deleted]]
+
+#check null columns
+df_train.isnull().sum()
+
+
+#Exploratory Data Analysis
+#How many difference number of attending, operating, and other physician between fraud and not fraud?
+
+for feature in df_train.columns:
+    if feature.split('_')[0][-9:] == 'Physician':
+        fig = px.histogram(df_train, x=feature, color="PotentialFraud")
+        fig.show()
+
+#How many difference number of claim between fraud and not fraud?
+
+for feature in df_train.columns:
+    if feature[:3] == 'num':
+        fig = px.histogram(df_train, x=feature, color="PotentialFraud")
+        fig.show()
+
+#How many difference amount between fraud and not fraud?
+
+for feature in ['InscClaimAmtReimbursed_In', 'DeductibleAmtPaid_In']:
+    fig = px.histogram(df_train, x=feature, color="PotentialFraud")
+    fig.show()
+
+for feature in df_train.columns:
+    if feature[-3:] == 'Amt':
+        fig = px.histogram(df_train, x=feature, color="PotentialFraud")
+        fig.show()
+
+#What is the 5 most chronic disseases that fraud and not fraud have?
+df_fraud = df_train[df_train['PotentialFraud'] == 'Yes']
+for i in df_fraud.columns:
+    if i[:11] == 'ChronicCond' :
+        print(f'Maximum value of Fraud {i} : {df_fraud[i].max()}')
+
+#The fifth chronic conditions based on fraud provider have maximum number more than 281
+for feature in df_fraud.columns:
+    if feature[:11] == 'ChronicCond' and df_fraud[feature].max() > 281:
+        fig = px.histogram(df_train, x=feature, color="PotentialFraud")
+        fig.show()
+
+df_not_fraud = df_train[df_train['PotentialFraud'] == 'No']
+for i in df_not_fraud.columns:
+    if i[:11] == 'ChronicCond' :
+        print(f'Maximum value of Not fraud {i} : {df_not_fraud[i].max()}')
+
+#The fifth chronic conditions based on not fraud provider have maximum number between 63 and 97
+for feature in df_not_fraud.columns:
+    if feature[:11] == 'ChronicCond' and df_not_fraud[feature].max() >= 63:
+        fig = px.histogram(df_train, x=feature, color="PotentialFraud")
+        fig.show()
+
+
+
+#Get test data
+
+#merge all training data.
+df_test = Test.merge(Test_Inpatientdata, how = 'left', on = 'Provider')
+df_test = df_test.merge(Test_Outpatientdata, how = 'left', on = ['Provider', 'BeneID', 'ClaimID'])
+df_test = df_test.merge(Test_Beneficiarydata, how = 'left', on = 'BeneID')
+
+## Add num of claims features
+
+# Assign claim to 1 and null claim to 0
+df_test[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']] = df_test[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']].where(~df_test[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']].notna(), 1)
+df_test[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']] = df_test[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']].where(df_test[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']].notna(), 0)
+
+#change type of columns from string into int
+df_test[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']] = df_test[['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x']].astype('int64')
+
+# Sum number of claims
+claim_diagnose = []
+
+for i in range(len(df_test)):
+    claim_diagnose.append(df_test['ClmDiagnosisCode_1_x'][i]+ df_test['ClmDiagnosisCode_2_x'][i]+ df_test['ClmDiagnosisCode_3_x'][i]+ df_test['ClmDiagnosisCode_4_x'][i]+ df_test['ClmDiagnosisCode_5_x'][i]+ df_test['ClmDiagnosisCode_6_x'][i]+ df_test['ClmDiagnosisCode_7_x'][i]+df_test['ClmDiagnosisCode_8_x'][i]+  df_test['ClmDiagnosisCode_9_x'][i]+ df_test['ClmDiagnosisCode_10_x'][i])
+
+#Put into a column.
+df_test['num_claim_diagnose_in'] = claim_diagnose
+
+#drop columns of claim code.
+df_test.drop(columns = ['ClmDiagnosisCode_1_x', 'ClmDiagnosisCode_2_x', 'ClmDiagnosisCode_3_x', 'ClmDiagnosisCode_4_x', 'ClmDiagnosisCode_5_x', 'ClmDiagnosisCode_6_x', 'ClmDiagnosisCode_7_x', 'ClmDiagnosisCode_8_x', 'ClmDiagnosisCode_9_x', 'ClmDiagnosisCode_10_x'], axis = 1, inplace = True)
+
+# Assign claim to 1 and null claim to 0
+df_test[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']] = df_test[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']].where(~df_test[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']].notna(), 1)
+df_test[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']] = df_test[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']].where(df_test[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']].notna(), 0)
+
+#change type of columns from string into int
+df_test[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']] = df_test[['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y']].astype('int64')
+
+# Sum number of claims
+claim_diagnose = []
+
+for i in range(len(df_test)):
+    claim_diagnose.append(df_test['ClmDiagnosisCode_1_y'][i]+ df_test['ClmDiagnosisCode_2_y'][i]+ df_test['ClmDiagnosisCode_3_y'][i]+ df_test['ClmDiagnosisCode_4_y'][i]+ df_test['ClmDiagnosisCode_5_y'][i]+ df_test['ClmDiagnosisCode_6_y'][i]+ df_test['ClmDiagnosisCode_7_y'][i]+df_test['ClmDiagnosisCode_8_y'][i]+  df_test['ClmDiagnosisCode_9_y'][i]+ df_test['ClmDiagnosisCode_10_y'][i])
+
+#Put into a column.
+df_test['num_claim_diagnose_out'] = claim_diagnose
+
+#drop columns of claim code.
+df_test.drop(columns = ['ClmDiagnosisCode_1_y', 'ClmDiagnosisCode_2_y', 'ClmDiagnosisCode_3_y', 'ClmDiagnosisCode_4_y', 'ClmDiagnosisCode_5_y', 'ClmDiagnosisCode_6_y', 'ClmDiagnosisCode_7_y', 'ClmDiagnosisCode_8_y', 'ClmDiagnosisCode_9_y', 'ClmDiagnosisCode_10_y'], axis = 1, inplace = True)
+
+# Assign claim to 1 and null claim to 0
+df_test[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']] = df_test[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']].where(~df_test[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']].notna(), 1)
+df_test[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']] = df_test[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']].where(df_test[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']].notna(), 0)
+
+#change type of columns from string into int
+df_test[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']] = df_test[['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x']].astype('int64')
+
+# Sum number of claims
+claim_procedure = []
+
+for i in range(len(df_test)):
+    claim_procedure.append(df_test['ClmProcedureCode_1_x'][i]+ df_test['ClmProcedureCode_2_x'][i]+ df_test['ClmProcedureCode_3_x'][i]+ df_test['ClmProcedureCode_4_x'][i]+ df_test['ClmProcedureCode_5_x'][i])
+
+#Put into a column.
+df_test['num_claim_procedure_in'] = claim_procedure
+
+#drop columns of claim code.
+df_test.drop(columns = ['ClmProcedureCode_1_x', 'ClmProcedureCode_2_x', 'ClmProcedureCode_3_x', 'ClmProcedureCode_4_x', 'ClmProcedureCode_5_x'], axis = 1, inplace = True)
+
+# Assign claim to 1 and null claim to 0
+df_test[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']] = df_test[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']].where(~df_test[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']].notna(), 1)
+df_test[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']] = df_test[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']].where(df_test[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']].notna(), 0)
+
+#change type of columns from string into int
+df_test[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']] = df_test[['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y']].astype('int64')
+
+# Sum number of claims
+claim_procedure = []
+
+for i in range(len(df_test)):
+    claim_procedure.append(df_test['ClmProcedureCode_1_y'][i]+ df_test['ClmProcedureCode_2_y'][i]+ df_test['ClmProcedureCode_3_y'][i]+ df_test['ClmProcedureCode_4_y'][i]+ df_test['ClmProcedureCode_5_y'][i])
+
+#Put into a column.
+df_test['num_claim_procedure_out'] = claim_procedure
+
+#drop columns of claim code.
+df_test.drop(columns = ['ClmProcedureCode_1_y', 'ClmProcedureCode_2_y', 'ClmProcedureCode_3_y', 'ClmProcedureCode_4_y', 'ClmProcedureCode_5_y'], axis = 1, inplace = True)
+
+## Mapping attending columns
+df_test[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']] = df_test[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']].where(~df_test[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']].notna(), 1)
+df_test[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']] = df_test[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']].where(df_test[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']].notna(), 0)
+df_test[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']] = df_test[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']].where(~df_test[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']].notna(), 1)
+df_test[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']] = df_test[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']].where(df_test[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']].notna(), 0)
+
+#Change tipe of columns
+df_test[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']] = df_test[['AttendingPhysician_x', 'OperatingPhysician_x', 'OtherPhysician_x']].astype('int64')
+df_test[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']] = df_test[['AttendingPhysician_y', 'OperatingPhysician_y', 'OtherPhysician_y']].astype('int64')
+
+### Mapping chronic dissease columns
+##Replacing 2 with 0 for chronic conditions ,that means chronic condition No is 0 and yes is 1
+
+
+df_test = df_test.replace({'ChronicCond_Alzheimer': 2, 'ChronicCond_Heartfailure': 2, 'ChronicCond_KidneyDisease': 2,
+                           'ChronicCond_Cancer': 2, 'ChronicCond_ObstrPulmonary': 2, 'ChronicCond_Depression': 2, 
+                           'ChronicCond_Diabetes': 2, 'ChronicCond_IschemicHeart': 2, 'ChronicCond_Osteoporasis': 2, 
+                           'ChronicCond_rheumatoidarthritis': 2, 'ChronicCond_stroke': 2 }, 0)
+
+#Groupby Provider
+df_test = df_test.groupby(['Provider'],as_index=False).agg('sum')
+df_test.drop(columns = ['Gender', 'Race', 'State', 'County'], inplace = True, axis = 1)
+
+#rename columns 
+
+#Assign template to rename columns.
+name = []
+temp = []
+for column in df_test.columns:
+    if column[-2:] == '_x':
+        name.append(column)
+        temp.append(column[:-2] + '_In')
+
+# Rename column based on template.
+for i in range(len(name)):
+    df_test=df_test.rename(columns = {name[i]:temp[i]})
+
+#Assign template to rename columns.
+name = []
+temp = []
+for column in df_test.columns:
+    if column[-2:] == '_y':
+        name.append(column)
+        temp.append(column[:-2] + '_Out')
+
+# Rename column based on template.
+for i in range(len(name)):
+    df_test=df_test.rename(columns = {name[i]:temp[i]})
+
+#Based on descriptive statistics, columns that only one value will be deleted.
+deleted = []
+for feature in df_test.columns:
+    if df_test[feature].nunique() <= 1:
+        deleted.append(feature)
+        
+df_test = df_test[[i for i in df_test.columns if i not in deleted]]
+
+#check null columns
+df_test.isnull().sum()
+
+
+
+#Advance Feature Selection
+
+## Fill NaN
+
+df_m = df_train.copy()
+
+num_cols = [i for i in df_m.columns if df_m[i].dtypes == 'float64' or df_m[i].dtypes == 'int64']
+
+    
+for i in num_cols:
+    df_m[i].fillna(0, inplace=True)
+
+#Select columns using correlation between categorical and numerical data.
+df_m["PotentialFraud"] = df_m["PotentialFraud"].map({"Yes" : 1,"No" : 0})  
+num_cols = num_cols + ["PotentialFraud"]
+corr = df_m[num_cols].corr(method='kendall')['PotentialFraud'].reset_index().rename(columns = {'index' : 'feature'})
+
+select_cols = []
+for i in corr['feature'].unique():
+    if (corr.loc[corr.feature == i, 'PotentialFraud'].values[0] >= 0.01) | (corr.loc[corr.feature == i, 'PotentialFraud'].values[0] <= -0.01):
+        select_cols.append(i)
+    else:
+        continue
+
+len(select_cols)
+
+#Use columns to be features of train data.
+df_temp = df_train[select_cols]
+
+df_temp = df_temp.loc[:,~df_temp.columns.duplicated()]
+
+
+#Data Preparation
+
+ax = df_temp['PotentialFraud'].value_counts().plot.pie(explode=[0.1,0.1],autopct='%1.1f%%',shadow=True, colors=['#FF5E5B', '#4F6272'],textprops = {'fontsize':11}).set_title("Fraud distribution",  fontsize = 15)
+plt.ylabel('')
+plt.show()                                                                                                       
+
+plt.show()
+
+#Check data if any null columns
+df_temp.isna().sum()
+
+# split data into features and target and then train and test.
+df_temp["PotentialFraud"] = df_temp["PotentialFraud"].map({"Yes" : 1,"No" : 0})  
+X_train_val = df_temp.drop(columns = "PotentialFraud")
+y_train_val = df_temp["PotentialFraud"]
+
+
+#Use columns to be features of test data.
+select_test = [i for i in select_cols if i != 'PotentialFraud'] + ["Provider"]
+test = df_test[select_test]
+test = test.loc[:,~test.columns.duplicated()]
+
+id_test = test[["Provider"]]
+X_input = test.drop(columns = ["Provider"], axis = 1)
+
+#check outlier
+
+num_cols = [i for i in X_train_val.columns if X_train_val[i].dtypes == 'float64' or X_train_val[i].dtypes == 'int64' if i[:11] != 'ChronicCond']
+
+for feature in df_temp[num_cols]:
+    df_temp[feature].plot(kind='box', notch=True, patch_artist=True)
+    plt.show();
+
+num_cols = [i for i in X_train_val.columns if X_train_val[i].dtypes == 'float64' or X_train_val[i].dtypes == 'int64']
+
+
+
+num_transform = Pipeline([
+                                    ("scaler", RobustScaler())
+])
+         
+
+prep_pipeline =  ColumnTransformer([
+    ('num trans', num_transform, num_cols)
+])
+    
+
+
+#Modeling
+
+#Logistic Regression
+model_lr = imbpipeline([ 
+    ('prep', prep_pipeline),
+    ('smote', SMOTE(sampling_strategy = 'minority')),
+    ('poly', PolynomialFeatures(degree=2, include_bias=False)),
+    ('lr',LogisticRegression(random_state = 0))
+])
+
+#Random Forest
+model_rf = imbpipeline([ 
+    ('prep', prep_pipeline),
+    ('smote', SMOTE(sampling_strategy = 'minority')),
+    ('rf',RandomForestClassifier(random_state = 0))
+])
+
+#Decision Tree
+model_dt = imbpipeline([ 
+    ('prep', prep_pipeline),
+    ('smote', SMOTE(sampling_strategy = 'minority')),
+    ('dt',DecisionTreeClassifier(random_state = 0))
+])
+
+#Naive Bayes
+model_nb = imbpipeline([ 
+    ('prep', prep_pipeline),  # Preprocessing pipeline (assumed to be defined earlier)
+    ('smote', SMOTE(sampling_strategy='minority')),  # Handling class imbalance
+    ('poly', PolynomialFeatures(degree=2, include_bias=False)),  # Feature expansion
+    ('nb', GaussianNB())  # Naive Bayes classifier
+])
+
+#Evaluation
+
+def model_evaluation_cv(model, metric):
+    skfold = StratifiedKFold(n_splits = 5)
+    model_cv = cross_val_score(model, X_train_val, y_train_val, cv = skfold, scoring = metric)
+    avg_accuracy = model_cv.mean()
+    return avg_accuracy
+
+print('Accuracy Score Evaluation of Naive Bayes : ', model_evaluation_cv(model_nb, 'accuracy'))
+print('Accuracy Score Evaluation of Random Forest : ', model_evaluation_cv(model_rf, 'accuracy'))
+print('Accuracy Score Evaluation of Decision Tree : ', model_evaluation_cv(model_dt, 'accuracy'))
+print('Accuracy Score Evaluation of Logistic Regression : ', model_evaluation_cv(model_lr, 'accuracy'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
