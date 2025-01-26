@@ -1,2 +1,6 @@
 # Logistic Regression
 
+import kagglehub
+rohitrox_healthcare_provider_fraud_detection_analysis_path = kagglehub.dataset_download('rohitrox/healthcare-provider-fraud-detection-analysis')
+
+print('Data source import complete.')
