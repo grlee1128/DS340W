@@ -13,5 +13,76 @@ for dirname, _, filenames in os.walk('/kaggle/input'):
     for filename in filenames:
         print(os.path.join(dirname, filename))
 
-train = pd.read_csv('/kaggle/input/healthcare-provider-fraud-detection-analysis/Train-1542865627584.csv');
+train = pd.read_csv('/kaggle/input/healthcare-provider-fraud-detection-analysis/Train-1542865627584.csv')
 train.head()
+
+outpatient= pd.read_csv("/kaggle/input/healthcare-provider-fraud-detection-analysis/Train_Outpatientdata-1542865627584.csv")
+outpatient.head()
+
+inpatient= pd.read_csv("/kaggle/input/healthcare-provider-fraud-detection-analysis/Train_Inpatientdata-1542865627584.csv")
+inpatient.head()
+
+beneficiary= pd.read_csv("/kaggle/input/healthcare-provider-fraud-detection-analysis/Train_Beneficiarydata-1542865627584.csv")
+beneficiary.head()
+
+
+#Train-Test Split
+from sklearn.model_selection import train_test_split
+x_train,x_test, y_train, y_test= train_test_split(x,y, test_size=0.1, random_state=42)
+from imblearn.under_sampling import RandomUnderSampler
+rus = RandomUnderSampler(random_state=0)
+x_train1,y_train1 = rus.fit_resample(x_train, y_train)
+
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score, roc_auc_score, auc, roc_curve
+
+
+
+
+
+
+from sklearn.linear_model import LogisticRegression
+lr= LogisticRegression()
+lr.fit(x_train, y_train)
+train_pred= lr.predict(x_train)
+test_pred= lr.predict(x_test)
+print(accuracy_score(y_train,train_pred))
+print(accuracy_score(y_test,test_pred))
+
+lr.fit(x_train1, y_train1)
+train_pred= lr.predict(x_train1)
+test_pred= lr.predict(x_test)
+print(accuracy_score(y_train1,train_pred))
+print(accuracy_score(y_test,test_pred))
+
+from sklearn.linear_model import LogisticRegression
+lr= LogisticRegression()
+lr.fit(x_train, y_train)
+train_pred= lr.predict(x_train)
+test_pred= lr.predict(x_test)
+start = time.time()
+lr.score(x_train, y_train)
+acc_random_forest = round(accuracy_score(y_test,test_pred)*100, 2)
+f1_random_forest = round(f1_score(y_test,test_pred,average = "binary")*100, 2)
+f_beta_random_forest = round(fbeta_score(y_test,test_pred,average = "binary",beta=0.5)*100, 2)
+
+end = time.time()
+acc_score.append({'Model': "Logistic Regression", 'Score': accuracy_score(y_train,train_pred), 'Accuracy': accuracy_score(y_test,test_pred), 'Time_Taken':end - start})
+
+confusion_matrix(y_test,test_pred)
+
+tn, fp, fn, tp = confusion_matrix(y_test,test_pred).ravel()
+(tn, fp, fn, tp)
+
+train_fpr, train_tpr, thresholds = roc_curve(y_train, lr.predict_proba(x_train)[:,1])
+test_fpr, test_tpr, thresholds = roc_curve(y_test, lr.predict_proba(x_test)[:,1])
+
+plt.plot(train_fpr, train_tpr, label="train AUC ="+str(auc(train_fpr, train_tpr)))
+plt.plot(test_fpr, test_tpr, label="test AUC ="+str(auc(test_fpr, test_tpr)))
+plt.legend()
+plt.xlabel("FPR")
+plt.ylabel("TPR")
+plt.title("ROC CURVE")
+plt.show()
+
+
+
