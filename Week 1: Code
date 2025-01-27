@@ -530,23 +530,39 @@ model_lr = imbpipeline([
 #Random Forest
 model_rf = imbpipeline([ 
     ('prep', prep_pipeline),
-    ('smote', SMOTE(sampling_strategy = 'minority')),
-    ('rf',RandomForestClassifier(random_state = 0))
+    ('smote', SMOTE(sampling_strategy='not majority')), 
+    ('rf', RandomForestClassifier(
+        random_state=0,
+        n_estimators=10,          
+        max_depth=3,              
+        max_features='sqrt',       
+        min_samples_split=10,     
+        min_samples_leaf=5,       
+        max_samples=0.5            
+    ))
 ])
 
 #Decision Tree
-model_dt = imbpipeline([ 
+model_dt = imbpipeline([
     ('prep', prep_pipeline),
-    ('smote', SMOTE(sampling_strategy = 'minority')),
-    ('dt',DecisionTreeClassifier(random_state = 0))
+    ('smote', SMOTE(sampling_strategy='minority', k_neighbors=1, random_state=42)),  # More conservative SMOTE
+    ('dt', DecisionTreeClassifier(
+        criterion='entropy',            # Capture more informative splits
+        max_depth=30,                    # Allow deeper splits for better fitting
+        min_samples_split=5,              # Lower for finer splits
+        min_samples_leaf=2,               # Smaller leaf nodes for better granularity
+        max_features=None,                # Use all features to increase accuracy
+        class_weight=None,                 # Let the tree learn weights naturally
+        splitter='best',                   # Choose the best split for accuracy
+        random_state=42
+    ))
 ])
 
 #Naive Bayes
 model_nb = imbpipeline([ 
-    ('prep', prep_pipeline),  # Preprocessing pipeline (assumed to be defined earlier)
-    ('smote', SMOTE(sampling_strategy='minority')),  # Handling class imbalance
-    ('poly', PolynomialFeatures(degree=2, include_bias=False)),  # Feature expansion
-    ('nb', GaussianNB())  # Naive Bayes classifier
+    ('prep', prep_pipeline),
+    ('poly', PolynomialFeatures(degree=1)),
+    ('nb', GaussianNB(var_smoothing=1e6))
 ])
 
 #Evaluation
