@@ -2,3 +2,4 @@ This repository consists for necessary codes for the authors' DS 340W group proj
 There are two codes available: DS_340W_ParentPaper_Code_FINAL.ipynb and DS_340W_Week_1_Code_FINAL.ipynb.
 DS_340W_ParentPaper_Code_FINAL.ipynb provides codes that resemble the results presented in the parent paper.
 DS_340W_Week_1_Code_FINAL.ipynb provides codes that consists of both parent paper results and our own novelty. 
+The authors created this code in Google Colab, so it is recommended for readers to view the code in the same platform. 
